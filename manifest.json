@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Freedom",
+  "description": "Nobody wants to see their ex",
+  "version": "1.0",
+  "icons": {},
+  "action": {
+    "default_popup": "hello.html"},
+  "permissions": ["activeTab", "scripting", "tabs"],
+  "background" : {
+    "service_worker" : "background.js"
+  }
+
+}
