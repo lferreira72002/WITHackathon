@@ -1,5 +1,4 @@
 var STATE = "INTRO";
-
 const OPENAI_API_KEY = "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";
 
 const form = document.querySelector("#userForm");
@@ -14,7 +13,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
   const userMessage = document.getElementById("userMessage");
   const chatUserMessage = document.querySelector(".chat-message-user p");
 
-  orm.addEventListener("submit", (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = userMessage.value;
     if (text) {
@@ -36,70 +35,76 @@ form.addEventListener("submit", (event) => {
 });
 
 function appendMessage(from, text) {
-  const styleClass =
-    from == "user"
-      ? "chat-message-user"
-      : from == "user"
-      ? "chat-message-ai"
-      : "";
+  const styleClass = from == "user" ? "chat-message-user" : "chat-message-ai"; // Corrected this line to handle 'assistant' case
 
-  const HTML = `
-  <div class="chat-message ${styleClass}">
-  <p>${text}</p>
-  </div>
-  `;
+  const waitingBubble = document.querySelector("#waitingBubble p");
+  if (waitingBubble && from == "assistant") {
+    waitingBubble.textContent = text;
+    waitingBubble.parentElement.id = "";
+  } else {
+    const HTML = `
+            <div class="chat-message ${styleClass} typewriter">
+              <p>${text}</p>
+            </div>
+          `;
 
-  chat.insertAdjacentHTML("beforeend", HTML);
+    chat.insertAdjacentHTML("beforeend", HTML);
+  }
 }
 
-function waitBubble(add = false){
+function waitBubble(add = false) {
   if (add) {
     const HTML = `
-    <div class="chat-message chat-message-ai id="waitingBubble">
-    <p>...</p>
-    </div>
-    `;
+      <div class="chat-message chat-message-ai typewriter" id="waitingBubble">
+      <p>Thinking...</p>
+      </div>
+      `;
     chat.insertAdjacentHTML("beforeend", HTML);
   } else {
-    document.querySelector("#waitingbubble").innerHTML = ""
+    document.querySelector("#waitingBubble").innerHTML = "";
   }
-
 }
 
 function aiResponse(text) {
-  switch(STATE) {
+  waitBubble(true);
+
+  switch (STATE) {
     case "INTRO":
       var user_choice;
       gpt(text, "gpt-3.5-turbo", SYS_CHOICE)
-      .then((res) => user_choice = res)
-      .then( () => {
-        switch(user_choice){
-          case "TALK":
-            gpt(text, "gpt-4", SYS_TALK).then((res) => appendMessage("assistant", res));
-            break;
-          case "VENT":
-            gpt(text, "gpt-4", SYS_GUIDANCE).then((res) => appendMessage("assistant", res));
-            break;
-          case "DETOX":
-            break; 
-          case "NONE":
-            appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
-            break;
-          default: 
-            appendMessage("assistant", "The 'choice' model broke...");
-        }
-      })
-    break;
+        .then((res) => (user_choice = res))
+        .then(() => {
+          switch (user_choice) {
+            case "TALK":
+              gpt(text, "gpt-4", SYS_TALK).then((res) =>
+                appendMessage("assistant", res)
+              );
+              break;
+            case "VENT":
+              gpt(text, "gpt-4", SYS_GUIDANCE).then((res) =>
+                appendMessage("assistant", res)
+              );
+              break;
+            case "DETOX":
+              break;
+            case "NONE":
+              appendMessage(
+                "assistant",
+                "That's not a choice idiot. Try again and do better next time."
+              );
+              break;
+            default:
+              appendMessage("assistant", "The 'choice' model broke...");
+          }
+        });
+      break;
 
     case "TALKING":
-    break;
+      break;
   }
-
-  
 }
 
 function gpt(text, model, sys) {
-  waitBubble(true)
   var payload = {
     method: "POST",
     headers: {
@@ -124,9 +129,8 @@ function gpt(text, model, sys) {
     .then((res) => res.json())
     .then((data) => data.choices[0].message.content)
     .then((data) => {
-      waitBubble(false)
-      return data
-    })
+      return data;
+    });
 }
 
 function guidance(text) {
@@ -189,11 +193,10 @@ Step 1: Summarize the problems the user was having with the relationship. For ea
 
 Step 2: Write supportive reminders that show the user why they are better of not being in that relationship, based off the identified problems. Make these messages short and helpful; these will be displayed to the user whenever they are feeling sad. Enclose each reminder in <reminder> tags and enclose the entire list in <reminders> tags.`;
 
-
 const SYS_CHOICE = `Your task as an AI is to analyze the user's message to identify their needs. They could be:
 1. TALK: Talking it out.
 2. VENT: Dumping your vent
 3. DETOX: Digital detox
-Based on the context of the user's message, respond with: "TALK", "VENT", "DETOX". If none of these categories apply to their message, respond with "NONE".`
+Based on the context of the user's message, respond with: "TALK", "VENT", "DETOX". If none of these categories apply to their message, respond with "NONE".`;
 
-const SYS_TALK = `Start a conversation where you lend emotional support to the user, who has recently experienced a breakup. Encourage them to express their feelings about the relationship and its ending. As a supportive companion, offer them guidance based upon their emotions and situation. Keep a friendly tone throughout the conversation.`
+const SYS_TALK = `Start a conversation where you lend emotional support to the user, who has recently experienced a breakup. Encourage them to express their feelings about the relationship and its ending. As a supportive companion, offer them guidance based upon their emotions and situation. Keep a friendly tone throughout the conversation.`;
