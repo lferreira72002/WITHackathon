@@ -3,12 +3,17 @@
   "name": "BreakupBuddy",
   "description": "Nobody wants to see their ex",
   "version": "1.0",
-  "icons": {},
+  "icons": {
+    "16": "BB_Icon.png",
+    "48": "BB_Icon.png",
+    "128": "BB_Icon.png"
+  },
   "action": {
-    "default_popup": "hello.html"},
+    "default_popup": "hello.html",
+    "default_icon": "BB_Icon.png"
+  },
   "permissions": ["activeTab", "scripting", "tabs"],
-  "background" : {
-    "service_worker" : "background.js"
+  "background": {
+    "service_worker": "background.js"
   }
-
 }
