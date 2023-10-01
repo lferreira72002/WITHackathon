@@ -1,19 +1,29 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "BreakupBuddy",
   "description": "Nobody wants to see their ex",
   "version": "1.0",
+  "permissions": ["activeTab", "scripting", "tabs", "notifications", "http://%2A/", "https://%2A/", "webNavigation"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "icons": {
     "16": "BB_Icon.png",
     "48": "BB_Icon.png",
     "128": "BB_Icon.png"
   },
-  "action": {
+  "browser_action": {
     "default_popup": "hello.html",
     "default_icon": "BB_Icon.png"
   },
-  "permissions": ["activeTab", "scripting", "tabs"],
-  "background": {
-    "service_worker": "background.js"
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_script.js"],
+      "all_frames": true
+    }
+  ],
+  "externally_connectable": {
+    "matches": ["<all_urls>"]
   }
 }
