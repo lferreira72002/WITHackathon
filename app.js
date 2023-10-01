@@ -136,6 +136,7 @@ function aiResponse(text) {
 
     case "GETTINGAT":
       INSTAGRAM = text;
+      chrome.runtime.sendMessage({ action: "Instagram", data: INSTAGRAM });
       console.log("Instagram: " + INSTAGRAM)
       appendMessage("assistant", "Wonderful. Problem solved ;)");
       STATE = "INTRO"
