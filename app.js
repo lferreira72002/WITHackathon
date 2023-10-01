@@ -22,30 +22,33 @@ form.addEventListener("submit", (event) => {
 });
 
 function appendMessage(from, text) {
-  const styleClass =
-    from == "user"
-      ? "chat-message-user"
-      : from == "user"
-      ? "chat-message-ai"
-      : "";
+  const styleClass = from == "user" ? "chat-message-user" : "chat-message-ai"; // Corrected this line to handle 'assistant' case
 
-  const HTML = `
-  <div class="chat-message ${styleClass}">
-  <p>${text}</p>
-  </div>
-  `;
+  const waitingBubble = document.querySelector("#waitingBubble p");
+  if (waitingBubble && from == "assistant") {
+    waitingBubble.textContent = text;
+    waitingBubble.parentElement.id = "";
+  } else {
+    const HTML = `
+            <div class="chat-message ${styleClass} typewriter">
+              <p>${text}</p>
+            </div>
+          `;
 
-  chat.insertAdjacentHTML("beforeend", HTML);
+    chat.insertAdjacentHTML("beforeend", HTML);
+  }
 }
 
-function waitBubble(add = false){
+function waitBubble(add = false) {
   if (add) {
     const HTML = `
-    <div class="chat-message chat-message-ai id="waitingBubble">
-    <p>...</p>
-    </div>
-    `;
+      <div class="chat-message chat-message-ai typewriter" id="waitingBubble">
+      <p>Thinking...</p>
+      </div>
+      `;
     chat.insertAdjacentHTML("beforeend", HTML);
+  } else {
+    document.querySelector("#waitingBubble").innerHTML = "";
   }
 }
 
@@ -135,9 +138,8 @@ function gpt(messages, model, ) {
     .then((res) => res.json())
     .then((data) => data.choices[0].message.content)
     .then((data) => {
-      waitBubble(false)
-      return data
-    })
+      return data;
+    });
 }
 
 function guidance(text) {
@@ -199,7 +201,6 @@ You will follow a step-by-step process to analyze these notes and provide helpfu
 Step 1: Summarize the problems the user was having with the relationship. For each problem identified, provide citations in the form of quotes from the users note. Enclose each problem in <problem> XML tags. Inside the <problem> tag, put the summary in <summary> tags and citations in <evidence> tags.
 
 Step 2: Write supportive reminders that show the user why they are better of not being in that relationship, based off the identified problems. Make these messages short and helpful; these will be displayed to the user whenever they are feeling sad. Enclose each reminder in <reminder> tags and enclose the entire list in <reminders> tags.`;
-
 
 const SYS_CHOICE = `Your task as an AI is to analyze the user's message to identify their needs. They could be:
 1. TALK: Talking it out.
