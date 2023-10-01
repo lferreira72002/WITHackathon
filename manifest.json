@@ -5,8 +5,7 @@
   "version": "1.0",
   "permissions": ["activeTab", "scripting", "tabs", "notifications", "http://%2A/", "https://%2A/", "webNavigation"],
   "background": {
-    "scripts": ["background.js"],
-    "persistent": false
+    "service_worker": "background.js"
   },
   "icons": {
     "16": "BB_Icon.png",
