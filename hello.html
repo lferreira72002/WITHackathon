@@ -55,7 +55,7 @@
             padding: 5px;
             border: none;
             border-radius: 10px;
-            display: inline-block;
+            vertical-align: middle; /* New property */
         }
 
         #sendMessageBtn {
@@ -65,7 +65,7 @@
             padding: 5px 15px;
             cursor: pointer;
             border-radius: 10px;
-            display: inline-block;
+            vertical-align: middle; /* New property */
         }
 
         #userButton {
@@ -86,8 +86,13 @@
                     <div id="chat">
                         <div class="chat-message chat-message-ai">
                             <p>Hi there! I see that you're going through a tough time. 
-                                I'm here to support you and provide some guidance. Would 
-                                you like to talk about what's going on?<br>I can ...</p>
+                                I'm here to support you and provide some guidance.<br></br> Where should we start?
+                            </p>
+                            <ul>
+                                <li>Talking it out</li>
+                                <li>Dumping your vent</li>
+                                <li>Digital detox</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="user-input">
