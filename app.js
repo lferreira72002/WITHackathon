@@ -52,33 +52,54 @@ function appendMessage(from, text) {
   chat.insertAdjacentHTML("beforeend", HTML);
 }
 
-function aiResponse(text) {
-  switch(state) {
-    case "INTRO":
+function waitBubble(add = false){
+  if (add) {
+    const HTML = `
+    <div class="chat-message chat-message-ai id="waitingBubble">
+    <p>...</p>
+    </div>
+    `;
+    chat.insertAdjacentHTML("beforeend", HTML);
+  } else {
+    document.querySelector("#waitingbubble").innerHTML = ""
   }
 
-  var user_choice;
-  gpt(text, "gpt-3.5-turbo", SYS_CHOICE)
-  .then((res) => user_choice = res)
-  .then( res => {
-    switch(user_choice){
-      case "TALK":
-        appendMessage("assistant", res);
-        gpt(text, "gpt-4", SYS_GUIDANCE).then((res) => appendMessage("assistant", res));
-      case "VENT":
-        break;
-      case "DETOX":
-        break; 
-      case "NONE":
-        appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
-        break;
-      default: 
-        appendMessage("assistant", "The 'choice' model broke...");
-    }
-  })
+}
+
+function aiResponse(text) {
+  switch(STATE) {
+    case "INTRO":
+      var user_choice;
+      gpt(text, "gpt-3.5-turbo", SYS_CHOICE)
+      .then((res) => user_choice = res)
+      .then( () => {
+        switch(user_choice){
+          case "TALK":
+            gpt(text, "gpt-4", SYS_TALK).then((res) => appendMessage("assistant", res));
+            break;
+          case "VENT":
+            gpt(text, "gpt-4", SYS_GUIDANCE).then((res) => appendMessage("assistant", res));
+            break;
+          case "DETOX":
+            break; 
+          case "NONE":
+            appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
+            break;
+          default: 
+            appendMessage("assistant", "The 'choice' model broke...");
+        }
+      })
+    break;
+
+    case "TALKING":
+    break;
+  }
+
+  
 }
 
 function gpt(text, model, sys) {
+  waitBubble(true)
   var payload = {
     method: "POST",
     headers: {
@@ -101,7 +122,11 @@ function gpt(text, model, sys) {
   };
   return fetch("https://api.openai.com/v1/chat/completions", payload)
     .then((res) => res.json())
-    .then((data) => data.choices[0].message.content);
+    .then((data) => data.choices[0].message.content)
+    .then((data) => {
+      waitBubble(false)
+      return data
+    })
 }
 
 function guidance(text) {
