@@ -1,4 +1,5 @@
 var STATE = "INTRO";
+var HISTORY;
 
 const OPENAI_API_KEY = "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";
 
@@ -8,21 +9,6 @@ const chat = document.querySelector("#chat");
 
 const USER_ICON = "";
 const ASSIST_ICON = "";
-
-document.addEventListener("DOMContentLoaded", (event) => {
-  const form = document.getElementById("userForm");
-  const userMessage = document.getElementById("userMessage");
-  const chatUserMessage = document.querySelector(".chat-message-user p");
-
-  orm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const text = userMessage.value;
-    if (text) {
-      chatUserMessage.textContent = text;
-      userMessage.value = "";
-    }
-  });
-});
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -60,22 +46,26 @@ function waitBubble(add = false){
     </div>
     `;
     chat.insertAdjacentHTML("beforeend", HTML);
-  } else {
-    document.querySelector("#waitingbubble").innerHTML = ""
   }
-
 }
 
 function aiResponse(text) {
+  console.log("State: " + STATE);
   switch(STATE) {
     case "INTRO":
       var user_choice;
-      gpt(text, "gpt-3.5-turbo", SYS_CHOICE)
+      gpt(makeMessages(text, SYS_CHOICE), "gpt-3.5-turbo")
       .then((res) => user_choice = res)
-      .then( () => {
-        switch(user_choice){
+      .then( (_) => {
+        console.log("Choice: " + user_choice);
+        switch(user_choice.toUpperCase()){
           case "TALK":
-            gpt(text, "gpt-4", SYS_TALK).then((res) => appendMessage("assistant", res));
+            gpt(makeMessages(text, SYS_TALK), "gpt-4")
+            .then((res) => {
+              appendMessage("assistant", res);
+              addToTalkHistory(text, res);
+              STATE = "TALKING";
+            })
             break;
           case "VENT":
             gpt(text, "gpt-4", SYS_GUIDANCE).then((res) => appendMessage("assistant", res));
@@ -86,19 +76,49 @@ function aiResponse(text) {
             appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
             break;
           default: 
+            console.log(user_choice)
             appendMessage("assistant", "The 'choice' model broke...");
         }
       })
     break;
 
     case "TALKING":
+      console.log(HISTORY);
+      gpt(HISTORY, "gpt-4")
+            .then((res) => {
+              appendMessage("assistant", res);
+              addToTalkHistory(text, res);
+            })
     break;
   }
-
-  
 }
 
-function gpt(text, model, sys) {
+function makeMessages(sys, text) {
+  return [
+    {
+      role: "system",
+      content: sys,
+    },
+    {
+      role: "user",
+      content: text,
+    },
+  ]
+}
+
+function addToTalkHistory(userText, assistantText) {
+  HISTORY.push({
+    role: "user",
+    content: userText,
+  })
+  HISTORY.push({
+    role: "assistant",
+    content: assistantText,
+  })
+  return HISTORY;
+}
+
+function gpt(messages, model, ) {
   waitBubble(true)
   var payload = {
     method: "POST",
@@ -108,16 +128,7 @@ function gpt(text, model, sys) {
     },
     body: JSON.stringify({
       model: model,
-      messages: [
-        {
-          role: "system",
-          content: sys,
-        },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
+      messages: messages,
     }),
   };
   return fetch("https://api.openai.com/v1/chat/completions", payload)
@@ -194,6 +205,17 @@ const SYS_CHOICE = `Your task as an AI is to analyze the user's message to ident
 1. TALK: Talking it out.
 2. VENT: Dumping your vent
 3. DETOX: Digital detox
-Based on the context of the user's message, respond with: "TALK", "VENT", "DETOX". If none of these categories apply to their message, respond with "NONE".`
+Based on the context of the user's message, respond ONLY with the word: "TALK", "VENT", or "DETOX". If none of these categories apply to their message, respond with the word "NONE".`
 
-const SYS_TALK = `Start a conversation where you lend emotional support to the user, who has recently experienced a breakup. Encourage them to express their feelings about the relationship and its ending. As a supportive companion, offer them guidance based upon their emotions and situation. Keep a friendly tone throughout the conversation.`
+const SYS_TALK = `Hold a conversation where you guide your friend (the user) who has recently experienced a breakup through a deep and meaningful conversation. Guide them to express things they didn't like about the relationship while they were in it. To achieve this, ask lots of questions with the intention of getting the user to open up about the situation. Keep a friendly tone throughout the conversation, while keeping your responses simple and as succinct as possible.`
+
+HISTORY = [
+  {
+    role: "system",
+    content: SYS_TALK,
+  },
+  {
+    role: "assistant",
+    content: "Hi there! I see that you're going through a tough time. I'm here to support you and provide some guidance."
+  },
+]
