@@ -12,7 +12,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       if (tab && (tab.url.startsWith("http://") || tab.url.startsWith("https://"))) {
         console.log(tab.url);
 
-        let url = "https://www.instagram.com/kateewrightt/"; // Replace 'receivedData' with your actual data
+        let url = "https://www.instagram.com/" + INSTAUSER + "/"; // Replace 'receivedData' with your actual data
 
         if (tab.url === url) {
           console.log("URL detected");
@@ -43,6 +43,17 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         }
       }
     });
+  }
+});
+
+// background.js
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === "Instagram") {
+    const INSTAUSER = request.data;
+
+    // Now you can use the received variable in your background script
+    console.log("Received data:", INSTAUSER);
+    // Perform any further processing as needed
   }
 });
 });

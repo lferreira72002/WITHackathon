@@ -61,6 +61,7 @@ function aiResponse(text) {
   if (get_instagram) {
     INSTAGRAM = text;
     console.log("Insta" + INSTAGRAM)
+    chrome.runtime.sendMessage({ action: "Instagram", data: INSTAGRAM });
     get_instagram = false
     STATE = "INTRO"
   }
