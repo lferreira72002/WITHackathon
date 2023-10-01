@@ -57,14 +57,6 @@ function waitBubble(add = false) {
 function aiResponse(text) {
   waitBubble(true);
   console.log("State: " + STATE);
-
-  if (get_instagram) {
-    INSTAGRAM = text;
-    console.log("Insta" + INSTAGRAM)
-    get_instagram = false
-    STATE = "INTRO"
-  }
-
   switch(STATE) {
     case "INTRO":
       HISTORY = [
@@ -83,6 +75,7 @@ function aiResponse(text) {
       .then( (_) => {
         console.log("Choice: " + user_choice);
         switch(user_choice.toUpperCase()){
+
           case "TALK":
             gpt(makeMessages(text, SYS_TALK), "gpt-4")
             .then((res) => {
@@ -92,17 +85,21 @@ function aiResponse(text) {
             })
             .catch(e => appendMessage("assistant", "[Error caught! Intent: TALK State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
             break;
+
           case "VENT":
-            gpt(makeMessages(text, SYS_GUIDANCE), "gpt-4")
-            .then((res) => appendMessage("assistant", res))
-            .catch(e => appendMessage("assistant", "[Error caught! Intent: VENT State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
+            STATE = "VENTING";
+            appendMessage("assistant", "Awesome. Dump your vent in the chat! ");
             break;
+
           case "DETOX":
-            appendMessage("assistant", "Detox? No, I don't think I will. Just go to talk and type '/next' when you're done.");
+            STATE = "GETTINGAT"
+            appendMessage("assistant", "Let's move on. Can you paste their Instagram username into the chat?");
             break; 
+
           case "NONE":
             appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
             break;
+            
           default: 
             console.log(user_choice)
             appendMessage("assistant", "The 'choice' model broke...");
@@ -112,9 +109,9 @@ function aiResponse(text) {
     break;
 
     case "TALKING":
-      if (text == "/next") {
-        get_instagram = true;
-        appendMessage("assistant", "Let's move on. Can you paste their Instagram username into the chat?");
+      if (text == "/back") {
+        appendMessage("assistant", "What do you want to do?");
+        STATE = "INTRO";
       } else {
       addToTalkHistory(text, "user");
       gpt(HISTORY, "gpt-4")
@@ -125,6 +122,27 @@ function aiResponse(text) {
             .catch(e => appendMessage("assistant", "[Error caught! Intent: TALK State: TALKING] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
     }
     break;
+
+    case "VENTING":
+      if (text == "/back") {
+        appendMessage("assistant", "What do you want to do?");
+        STATE = "INTRO";
+      } else {
+      gpt(makeMessages(text, SYS_GUIDANCE), "gpt-4")
+      .then((res) => appendMessage("assistant", res))
+      .catch(e => appendMessage("assistant", "[Error caught! Intent: VENT State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"));
+      }
+    break;
+
+    case "GETTINGAT":
+      INSTAGRAM = text;
+      console.log("Instagram: " + INSTAGRAM)
+      appendMessage("assistant", "Wonderful. Problem solved ;)");
+      STATE = "INTRO"
+      break;
+    
+    default:
+      console.log("No case hit!");
   }
 }
 
@@ -222,12 +240,12 @@ function choice(text) {
 }
 
 const SYS_GUIDANCE = `You are an emotionally intelligent and supportive friend that writes reminders to help the user heal from their breakup.
-You will be provided with notes that the user has written to themself about the breakup (delimited with <note> XML tags).
+You will be provided with notes that the user has written to themself about the breakup.
 You will follow a step-by-step process to analyze these notes and provide helpful guidance.
 
-Step 1: Summarize the problems the user was having with the relationship. For each problem identified, provide citations in the form of quotes from the users note. Enclose each problem in <problem> XML tags. Inside the <problem> tag, put the summary in <summary> tags and citations in <evidence> tags.
+Step 1: Summarize the problems the user was having with the relationship. For each problem identified, provide citations in the form of quotes from the users note. Prefix each problem in with the word "Problem:". For each problem, prefix the summary with "Summary:" and citations with "Evidence:".
 
-Step 2: Write supportive reminders that show the user why they are better of not being in that relationship, based off the identified problems. Make these messages short and helpful; these will be displayed to the user whenever they are feeling sad. Enclose each reminder in <reminder> tags and enclose the entire list in <reminders> tags.`;
+Step 2: Write supportive reminders that show the user why they are better of not being in that relationship, based off the identified problems. Make these messages short and helpful; these will be displayed to the user whenever they are feeling sad. Prefix each reminder with "Reminder:" and prefix the entire list with "Reminders:".`;
 
 const SYS_CHOICE = `Your task as an AI is to analyze the user's message to identify their needs. They could be:
 1. TALK: Talk through the situation.
