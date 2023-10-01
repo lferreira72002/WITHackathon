@@ -53,7 +53,9 @@ function waitBubble(add = false) {
 }
 
 function aiResponse(text) {
+  waitBubble(true);
   console.log("State: " + STATE);
+
   switch(STATE) {
     case "INTRO":
       var user_choice;
@@ -86,11 +88,11 @@ function aiResponse(text) {
     break;
 
     case "TALKING":
-      console.log(HISTORY);
+      addToTalkHistory(text, "user");
       gpt(HISTORY, "gpt-4")
             .then((res) => {
               appendMessage("assistant", res);
-              addToTalkHistory(text, res);
+              addToTalkHistory(res, "assistant");
             })
     break;
   }
@@ -109,20 +111,15 @@ function makeMessages(sys, text) {
   ]
 }
 
-function addToTalkHistory(userText, assistantText) {
+function addToTalkHistory(text, role) {
   HISTORY.push({
-    role: "user",
-    content: userText,
-  })
-  HISTORY.push({
-    role: "assistant",
-    content: assistantText,
+    role: role,
+    content: text,
   })
   return HISTORY;
 }
 
 function gpt(messages, model, ) {
-  waitBubble(true)
   var payload = {
     method: "POST",
     headers: {
@@ -203,9 +200,9 @@ Step 1: Summarize the problems the user was having with the relationship. For ea
 Step 2: Write supportive reminders that show the user why they are better of not being in that relationship, based off the identified problems. Make these messages short and helpful; these will be displayed to the user whenever they are feeling sad. Enclose each reminder in <reminder> tags and enclose the entire list in <reminders> tags.`;
 
 const SYS_CHOICE = `Your task as an AI is to analyze the user's message to identify their needs. They could be:
-1. TALK: Talking it out.
-2. VENT: Dumping your vent
-3. DETOX: Digital detox
+1. TALK: Talk through the situation.
+2. VENT: Upload (dump) a note that contains details about your breakup.   
+3. DETOX: Block your ex's profile (digital detox).
 Based on the context of the user's message, respond ONLY with the word: "TALK", "VENT", or "DETOX". If none of these categories apply to their message, respond with the word "NONE".`
 
 const SYS_TALK = `Hold a conversation where you guide your friend (the user) who has recently experienced a breakup through a deep and meaningful conversation. Guide them to express things they didn't like about the relationship while they were in it. To achieve this, ask lots of questions with the intention of getting the user to open up about the situation. Keep a friendly tone throughout the conversation, while keeping your responses simple and as succinct as possible.`
