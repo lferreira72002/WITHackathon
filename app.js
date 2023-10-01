@@ -1,5 +1,7 @@
 var STATE = "INTRO";
 var HISTORY;
+var INSTAGRAM;
+var get_instagram = false;
 
 const OPENAI_API_KEY = "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";
 
@@ -56,8 +58,25 @@ function aiResponse(text) {
   waitBubble(true);
   console.log("State: " + STATE);
 
+  if (get_instagram) {
+    INSTAGRAM = text;
+    console.log("Insta" + INSTAGRAM)
+    get_instagram = false
+    STATE = "INTRO"
+  }
+
   switch(STATE) {
     case "INTRO":
+      HISTORY = [
+        {
+          role: "system",
+          content: SYS_TALK,
+        },
+        {
+          role: "assistant",
+          content: "Hi there! I see that you're going through a tough time. I'm here to support you and provide some guidance."
+        },
+      ]
       var user_choice;
       gpt(makeMessages(text, SYS_CHOICE), "gpt-3.5-turbo")
       .then((res) => user_choice = res)
@@ -71,11 +90,15 @@ function aiResponse(text) {
               addToTalkHistory(text, res);
               STATE = "TALKING";
             })
+            .catch(e => appendMessage("assistant", "[Error caught! Intent: TALK State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
             break;
           case "VENT":
-            gpt(text, "gpt-4", SYS_GUIDANCE).then((res) => appendMessage("assistant", res));
+            gpt(makeMessages(text, SYS_GUIDANCE), "gpt-4")
+            .then((res) => appendMessage("assistant", res))
+            .catch(e => appendMessage("assistant", "[Error caught! Intent: VENT State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
             break;
           case "DETOX":
+            appendMessage("assistant", "Detox? No, I don't think I will. Just go to talk and type '/next' when you're done.");
             break; 
           case "NONE":
             appendMessage("assistant", "That's not a choice idiot. Try again and do better next time.")
@@ -85,15 +108,22 @@ function aiResponse(text) {
             appendMessage("assistant", "The 'choice' model broke...");
         }
       })
+      .catch(e => appendMessage("assistant", "[Error caught! Intent: CHOICE State: INTRO] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
     break;
 
     case "TALKING":
+      if (text == "/next") {
+        get_instagram = true;
+        appendMessage("assistant", "Let's move on. Can you paste their Instagram username into the chat?");
+      } else {
       addToTalkHistory(text, "user");
       gpt(HISTORY, "gpt-4")
             .then((res) => {
               appendMessage("assistant", res);
               addToTalkHistory(res, "assistant");
             })
+            .catch(e => appendMessage("assistant", "[Error caught! Intent: TALK State: TALKING] OpenAI probably throttled you (or something else... this is just a .catch() ) :0"))
+    }
     break;
   }
 }
@@ -206,14 +236,3 @@ const SYS_CHOICE = `Your task as an AI is to analyze the user's message to ident
 Based on the context of the user's message, respond ONLY with the word: "TALK", "VENT", or "DETOX". If none of these categories apply to their message, respond with the word "NONE".`
 
 const SYS_TALK = `Hold a conversation where you guide your friend (the user) who has recently experienced a breakup through a deep and meaningful conversation. Guide them to express things they didn't like about the relationship while they were in it. To achieve this, ask lots of questions with the intention of getting the user to open up about the situation. Keep a friendly tone throughout the conversation, while keeping your responses simple and as succinct as possible.`
-
-HISTORY = [
-  {
-    role: "system",
-    content: SYS_TALK,
-  },
-  {
-    role: "assistant",
-    content: "Hi there! I see that you're going through a tough time. I'm here to support you and provide some guidance."
-  },
-]
